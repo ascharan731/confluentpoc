@@ -1,5 +1,5 @@
 ===============================
-This enviroment set up instructions are taken from  `Confluent<https://github.com/confluentinc/confluent-kubernetes-examples/tree/master/security/secure-authn-encrypt-deploy>`__.
+This enviroment set up instructions are taken from  `Confluent <https://github.com/confluentinc/confluent-kubernetes-examples/tree/master/security/secure-authn-encrypt-deploy>`_ .
 ===============================
 
 
