@@ -35,7 +35,7 @@ Clone the git repo and set the current working directory
 
   git clone <git url>
    
-  export WORKING_DIR=<working directory>/production-secure-deploy
+  export WORKING_DIR=<working directory>/confluentpoc
   
 ===============================
 Deploy Confluent for Kubernetes
@@ -64,7 +64,7 @@ Deploy Confluent for Kubernetes
    ::
      
      kubectl get pods
-
+.
 
 ============================
 Generate certificates
@@ -78,21 +78,21 @@ Creating root certificates
 
    ::
      
-     mkdir $TUTORIAL_HOME/../../assets/certs/generated
+     mkdir $WORKING_DIR/certs/generated
      
-     cfssl gencert -initca $TUTORIAL_HOME/../../assets/certs/ca-csr.json | cfssljson -bare $TUTORIAL_HOME/../../assets/certs/generated/ca -
+     cfssl gencert -initca $WORKING_DIR/certs/ca-csr.json | cfssljson -bare $WORKING_DIR/certs/generated/ca -
 
 #. Validate Certificate Authority
 
    :: 
    
-     openssl x509 -in $TUTORIAL_HOME/../../assets/certs/generated/ca.pem -text -noout
+     openssl x509 -in $WORKING_DIR/certs/generated/ca.pem -text -noout
     
 #. Make up server-domain.json files, below is for zookeeper, likewise, create for other confluent components. 
 
    ::   
    
-     cat $TUTORIAL_HOME/../../assets/certs/zookeeper-domain.json
+     cat $WORKING_DIR/certs/zookeeper-domain.json
           
            {
               "CN": "zookeeper",
@@ -114,33 +114,33 @@ Creating root certificates
               ]
            }
 
-#. Create server certificates for each component as be below 
+#. Create server certificates for each component as  below 
 
    ::
    
-     cfssl gencert -ca=$TUTORIAL_HOME/../../assets/certs/generated/ca.pem \
-     -ca-key=$TUTORIAL_HOME/../../assets/certs/generated/ca-key.pem \
-     -config=$TUTORIAL_HOME/../../assets/certs/ca-config.json \
-     -profile=server $TUTORIAL_HOME/../../assets/certs/zookeeper-domain.json | cfssljson -bare $TUTORIAL_HOME/../../assets/certs/generated/zookeeper
+     cfssl gencert -ca=$WORKING_DIR/certs/generated/ca.pem \
+     -ca-key=$WORKING_DIR/certs/generated/ca-key.pem \
+     -config=$WORKING_DIR/certs/ca-config.json \
+     -profile=server $WORKING_DIR/certs/zookeeper-domain.json | cfssljson -bare $WORKING_DIR/certs/generated/zookeeper
 
 #. Validate server certificate 
 
    ::
    
-     openssl x509 -in $TUTORIAL_HOME/../../assets/certs/generated/zookeeper.pem -text -noout
+     openssl x509 -in $WORKING_DIR/certs/generated/zookeeper.pem -text -noout
      
 ============================
 Deploy configuration secrets
 ============================
 
-#. Create a Kuebernetes secrets for zookeeper, likewise, create for other confluent components:
+#. Create a Kubernetes secrets for zookeeper, likewise, create for other confluent components:
 
    ::
    
      kubectl create secret generic tls-zookeeper \
-     --from-file=fullchain.pem=$TUTORIAL_HOME/../../assets/certs/generated/zookeeper.pem \
-     --from-file=cacerts.pem=$TUTORIAL_HOME/../../assets/certs/generated/ca.pem \
-     --from-file=privkey.pem=$TUTORIAL_HOME/../../assets/certs/generated/zookeeper-key.pem
+     --from-file=fullchain.pem=$WORKING_DIR/certs/generated/zookeeper.pem \
+     --from-file=cacerts.pem=$WORKING_DIR/certs/generated/ca.pem \
+     --from-file=privkey.pem=$WORKING_DIR/certs/generated/zookeeper-key.pem
   
 
 Provide authentication credentials 
