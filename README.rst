@@ -32,6 +32,7 @@ Set the current workiing directory
 Clone the git repo and set the current working directory 
 
 ::
+
   git clone <git url>
    
   export WORKING_DIR=<working directory>/production-secure-deploy
@@ -42,6 +43,7 @@ Deploy Confluent for Kubernetes
 #. Create confluent namespace
 
    ::
+   
      kubectl create namespace confluent
 
 #. Set up the Helm Chart:
@@ -63,9 +65,6 @@ Deploy Confluent for Kubernetes
      
      kubectl get pods
 
-============================
-Deploy configuration secrets
-============================
 
 ============================
 Creating certificates
@@ -75,7 +74,7 @@ Creating certificates
 Generating  Root Certificates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Generate a CA key pair to use in this scenario: 
+#. Generate CA key pair to use in this scenario: 
 
    ::
      
@@ -84,12 +83,15 @@ Generating  Root Certificates
      cfssl gencert -initca $TUTORIAL_HOME/../../assets/certs/ca-csr.json | cfssljson -bare $TUTORIAL_HOME/../../assets/certs/generated/ca -
 
 #. Validate Certificate Authority
-   ::  
+
+   :: 
+   
      openssl x509 -in $TUTORIAL_HOME/../../assets/certs/generated/ca.pem -text -noout
     
 #. Make up server-domain.json files, below is for zookeeper, likewise, create for other confluent components. 
 
    ::   
+   
      cat $TUTORIAL_HOME/../../assets/certs/zookeeper-domain.json
           
            {
@@ -111,30 +113,38 @@ Generating  Root Certificates
                }
               ]
            }
-        
+
 #. Create server certificates for each component as be below 
 
    ::
+   
      cfssl gencert -ca=$TUTORIAL_HOME/../../assets/certs/generated/ca.pem \
      -ca-key=$TUTORIAL_HOME/../../assets/certs/generated/ca-key.pem \
      -config=$TUTORIAL_HOME/../../assets/certs/ca-config.json \
      -profile=server $TUTORIAL_HOME/../../assets/certs/zookeeper-domain.json | cfssljson -bare $TUTORIAL_HOME/../../assets/certs/generated/zookeeper
 
 #. Validate server certificate 
-  ::  
+
+   ::
+   
      openssl x509 -in $TUTORIAL_HOME/../../assets/certs/generated/zookeeper.pem -text -noout
+     
+============================
+Deploy configuration secrets
+============================
 
 #. Create a Kuebernetes secrets for zookeeper, likewise, create for other confluent components:
 
    ::
+   
      kubectl create secret generic tls-zookeeper \
      --from-file=fullchain.pem=$TUTORIAL_HOME/../../assets/certs/generated/zookeeper.pem \
      --from-file=cacerts.pem=$TUTORIAL_HOME/../../assets/certs/generated/ca.pem \
      --from-file=privkey.pem=$TUTORIAL_HOME/../../assets/certs/generated/zookeeper-key.pem
   
 
-Provide authentication credentials by creating secret object for zookeeper, kafka, and Control Center.
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Provide authentication credentials 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -154,7 +164,7 @@ Deploy Confluent Platform
 
    ::
 
-     kubectl apply -f $WORKING_DIR/confluent-platform-production-mtls-final.yaml
+     kubectl apply -f $WORKING_DIR/confluent-platform-production-mtls.yaml
 
 #. Check that all Confluent Platform resources are deployed:
 
@@ -168,7 +178,7 @@ Deploy Confluent Platform
    
      kubectl describe controlcenter
 
-Validate in Control Center
+Access control center
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
@@ -191,19 +201,13 @@ Tear down
 
 ::
 
-  kubectl delete -f $WORKING_DIR/confluent-platform-secure.yaml
+  kubectl delete -f $WORKING_DIR/confluent-platform-production-mtls.yaml
 
-::
-
-  kubectl delete secret kafka-client-config-secure
 
 ::
 
   kubectl delete secret credential
 
-::
-
-  kubectl delete secret ca-pair-sslcerts
 
 ::
 
