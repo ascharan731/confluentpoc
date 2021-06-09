@@ -8,7 +8,7 @@ Deploy Secure Confluent Platform
 ================================
 
 In this workflow scenario, you'll set up secure Confluent Platform clusters with
-mTLS authentication, no authorization, and inter-component TLS.
+mTLS authentication.
 
 
 To complete this scenario, you'll follow these steps:
@@ -16,6 +16,8 @@ To complete this scenario, you'll follow these steps:
 #. Set the current working  directory.
 
 #. Deploy Confluent For Kubernetes.
+
+#. Creating certificates 
 
 #. Deploy configuration secrets.
 
@@ -32,7 +34,7 @@ Clone the git repo and set the current working directory
 ::
   git clone <git url>
    
-  export WORKING_DIR=<working directory>/secure-authn-encrypt-deploy
+  export WORKING_DIR=<working directory>/production-secure-deploy
   
 ===============================
 Deploy Confluent for Kubernetes
@@ -65,31 +67,72 @@ Deploy Confluent for Kubernetes
 Deploy configuration secrets
 ============================
 
+============================
+Creating certificates
+============================
+
    
-Provide a Root Certificate Authority
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Generating  Root Certificates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Generate a CA pair to use in this scenario: 
+#. Generate a CA key pair to use in this scenario: 
 
    ::
+     
+     mkdir $TUTORIAL_HOME/../../assets/certs/generated
+     
+     cfssl gencert -initca $TUTORIAL_HOME/../../assets/certs/ca-csr.json | cfssljson -bare $TUTORIAL_HOME/../../assets/certs/generated/ca -
 
-     openssl genrsa -out $WORKING_DIR/ca-key.pem 2048
+#. Validate Certificate Authority
+   ::  
+     openssl x509 -in $TUTORIAL_HOME/../../assets/certs/generated/ca.pem -text -noout
     
+#. Make up server-domain.json files, below is for zookeeper, likewise, create for other confluent components. 
+
+   ::   
+     cat $TUTORIAL_HOME/../../assets/certs/zookeeper-domain.json
+          
+           {
+              "CN": "zookeeper",
+              "hosts": [
+                  "*.confluent.svc.cluster.local",
+                  "*.zookeeper.confluent.svc.cluster.local",
+                  "*.kafka.confluent.svc.cluster.local"
+              ],
+              "key": {
+                 "algo": "rsa",
+                  "size": 2048
+              },
+             "names": [
+               {
+                 "C": "Universe",
+                 "ST": "Pangea",
+                 "L": "Earth"
+               }
+              ]
+           }
+        
+#. Create server certificates for each component as be below 
+
    ::
+     cfssl gencert -ca=$TUTORIAL_HOME/../../assets/certs/generated/ca.pem \
+     -ca-key=$TUTORIAL_HOME/../../assets/certs/generated/ca-key.pem \
+     -config=$TUTORIAL_HOME/../../assets/certs/ca-config.json \
+     -profile=server $TUTORIAL_HOME/../../assets/certs/zookeeper-domain.json | cfssljson -bare $TUTORIAL_HOME/../../assets/certs/generated/zookeeper
 
-     openssl req -new -key $WORKING_DIR/ca-key.pem -x509 \
-       -days 1000 \
-       -out $WORKING_DIR/ca.pem \
-       -subj "/C=US/ST=CA/L=MountainView/O=Confluent/OU=Operator/CN=TestCA"
+#. Validate server certificate 
+  ::  
+     openssl x509 -in $TUTORIAL_HOME/../../assets/certs/generated/zookeeper.pem -text -noout
 
-#. Create a Kuebernetes secret for inter-component TLS:
+#. Create a Kuebernetes secrets for zookeeper, likewise, create for other confluent components:
 
    ::
-
-     kubectl create secret tls ca-pair-sslcerts \
-       --cert=$WORKING_DIR/ca.pem \
-       --key=$WORKING_DIR/ca-key.pem
+     kubectl create secret generic tls-zookeeper \
+     --from-file=fullchain.pem=$TUTORIAL_HOME/../../assets/certs/generated/zookeeper.pem \
+     --from-file=cacerts.pem=$TUTORIAL_HOME/../../assets/certs/generated/ca.pem \
+     --from-file=privkey.pem=$TUTORIAL_HOME/../../assets/certs/generated/zookeeper-key.pem
   
+
 Provide authentication credentials by creating secret object for zookeeper, kafka, and Control Center.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -111,7 +154,7 @@ Deploy Confluent Platform
 
    ::
 
-     kubectl apply -f $WORKING_DIR/confluent-platform-secure.yaml
+     kubectl apply -f $WORKING_DIR/confluent-platform-production-mtls-final.yaml
 
 #. Check that all Confluent Platform resources are deployed:
 
