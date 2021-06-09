@@ -64,7 +64,31 @@ Deploy Confluent for Kubernetes
    ::
      
      kubectl get pods
-.
+
+============================
+Install cfssl if required
+============================
+
+#. Install cfssl program
+
+  ::
+    
+    VERSION=$(curl --silent "https://api.github.com/repos/cloudflare/cfssl/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    VNUMBER=${VERSION#"v"}
+    wget https://github.com/cloudflare/cfssl/releases/download/${VERSION}/cfssl_${VNUMBER}_linux_amd64 -O cfssl
+    chmod +x cfssl
+    sudo mv cfssl /usr/local/bin
+
+#. Install cfssljson program
+
+  ::
+  
+    VERSION=$(curl --silent "https://api.github.com/repos/cloudflare/cfssl/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    VNUMBER=${VERSION#"v"}
+    wget https://github.com/cloudflare/cfssl/releases/download/${VERSION}/cfssljson_${VNUMBER}_linux_amd64 -O cfssljson
+    chmod +x cfssljson
+    sudo mv cfssljson /usr/local/bin
+    cfssljson -version
 
 ============================
 Generate certificates
