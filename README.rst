@@ -17,7 +17,7 @@ To complete this scenario, you'll follow these steps:
 
 #. Deploy Confluent For Kubernetes.
 
-#. Generating certificates 
+#. Generate certificates 
 
 #. Deploy configuration secrets.
 
@@ -67,7 +67,7 @@ Deploy Confluent for Kubernetes
 
 
 ============================
-Generating certificates
+Generate certificates
 ============================
 
    
